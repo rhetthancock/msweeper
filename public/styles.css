@@ -1,0 +1,21 @@
+#board {
+    display:flex;
+    flex-wrap:wrap;
+}
+.cell {
+    background-color:#666;
+    border:3px solid #999;
+    border-radius:50%;
+    cursor:pointer;
+    transition:all 250ms;
+}
+.cell:hover {
+    background-color:#999;
+    border-color:#ccc;
+}
+* {
+    box-sizing:border-box;
+}
+body {
+    background:#000;
+}
