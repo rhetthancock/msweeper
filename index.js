@@ -1,6 +1,8 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
+const path = require('path');
 const uuidv4 = require('uuid').v4;
 
 let boards = {};
@@ -11,20 +13,20 @@ function Board(width, height, gameId) {
         gameState: 'virgin',
         width: width,
         height: height,
-        serverBoard: {},
-        clientBoard: [],
+        cellLookup: {},
+        cells: [],
     };
     for(let x = 0; x < width; x++) {
         for(let y = 0; y < height; y++) {
             let uid = uuidv4();
-            board.serverBoard[uid] = {
+            board.cellLookup[uid] = {
                 x: x,
                 y: y,
                 isBomb: roll(0.15),
                 isFlagged: false,
                 isHidden: true
             }
-            board.clientBoard.push({
+            board.cells.push({
                 id: uid,
                 x: x,
                 y: y,
@@ -40,8 +42,8 @@ function applyCounts(board) {
     for(let x = 0; x < board.width; x++) {
         for(let y = 0; y < board.height; y++) {
             let index = getIndex(board, x, y);
-            let id = board.clientBoard[index].id;
-            let cell = board.serverBoard[id];
+            let id = board.cells[index].id;
+            let cell = board.cellLookup[id];
             let adjacentCells = getAdjacentCells(board, cell);
             let count = 0;
             for(let i = 0; i < adjacentCells.length; i++) {
@@ -67,32 +69,32 @@ function getAdjacentCells(board, cell) {
     let iBottom = getIndex(board, x, y + 1);
     let iBottomLeft = getIndex(board, x - 1, y + 1);
     if(iTopLeft != -1) {
-        let id = board.clientBoard[iTopLeft].id;
-        cells.push(board.serverBoard[id]);
+        let id = board.cells[iTopLeft].id;
+        cells.push(board.cellLookup[id]);
     }
     if(iTop != -1) {
-        let id = board.clientBoard[iTop].id;
-        cells.push(board.serverBoard[id]);
+        let id = board.cells[iTop].id;
+        cells.push(board.cellLookup[id]);
     }
     if(iTopRight != -1) {
-        let id = board.clientBoard[iTopRight].id;
-        cells.push(board.serverBoard[id]);
+        let id = board.cells[iTopRight].id;
+        cells.push(board.cellLookup[id]);
     }
     if(iRight != -1) {
-        let id = board.clientBoard[iRight].id;
-        cells.push(board.serverBoard[id]);
+        let id = board.cells[iRight].id;
+        cells.push(board.cellLookup[id]);
     }
     if(iBottomRight != -1) {
-        let id = board.clientBoard[iBottomRight].id;
-        cells.push(board.serverBoard[id]);
+        let id = board.cells[iBottomRight].id;
+        cells.push(board.cellLookup[id]);
     }
     if(iBottom != -1) {
-        let id = board.clientBoard[iBottom].id;
-        cells.push(board.serverBoard[id]);
+        let id = board.cells[iBottom].id;
+        cells.push(board.cellLookup[id]);
     }
     if(iBottomLeft != -1) {
-        let id = board.clientBoard[iBottomLeft].id;
-        cells.push(board.serverBoard[id]);
+        let id = board.cells[iBottomLeft].id;
+        cells.push(board.cellLookup[id]);
     }
     return cells;
 }
@@ -113,14 +115,19 @@ function roll(chance) {
 //     response.send('<h1>Hello World!</h1>');
 // });
 
-app.get('/', (request, response) => {
-    response.sendFile(__dirname + '/index.html');
-});
+// app.get('/', (request, response) => {
+//     response.sendFile(__dirname + '/index.html');
+// });
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', (socket) => {
     console.log('a user connected');
     boards[socket.id] = new Board(10, 10, socket.id);
-    socket.emit('board', boards[socket.id].clientBoard);
+    let clientBoard = {}
+    Object.assign(clientBoard, boards[socket.id]);
+    clientBoard.cellLookup = null;
+    socket.emit('newBoard', clientBoard);
     boards[socket.id] = applyCounts(boards[socket.id]);
     console.log(JSON.stringify(boards[socket.id]));
 

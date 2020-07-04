@@ -2,12 +2,16 @@
 <html>
     <head>
         <title>MSweeper</title>
+        <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
         <script src="/socket.io/socket.io.js"></script>
         <script>
+            let board;
             function init() {
                 const socket = io();
                 const butt = document.getElementById('genBoard');
-                socket.on('board', (board) => {
+                socket.on('newBoard', (payload) => {
+                    board = payload;
                     console.log(board);
                 })
             }
