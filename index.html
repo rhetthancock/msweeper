@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+    <head>
+        <title>MSweeper</title>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            function init() {
+                const socket = io();
+                const butt = document.getElementById('genBoard');
+                socket.on('board', (board) => {
+                    console.log(board);
+                })
+            }
+            window.addEventListener('load', init);
+        </script>
+    </head>
+    <body>
+        <h1>Hello World</h1>
+        <div id="board"></div>
+    </body>
+</html>
