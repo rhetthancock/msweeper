@@ -8,5 +8,9 @@
     "start": "node index.js"
   },
   "author": "Rhett Hancock",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
 }
