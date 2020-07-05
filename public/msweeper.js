@@ -110,6 +110,10 @@ function init() {
             document.getElementById(id).classList.remove('glimmer');
         }, 200, this);
     });
+    socket.on('markTrigger', (id) => {
+        let targetElement = document.getElementById(id);
+        targetElement.classList.add('trigger');
+    });
     socket.on('newBoard', (payload) => {
         let container = document.getElementById('board');
         board = payload;
@@ -122,38 +126,31 @@ function init() {
         console.log(board);
     });
     socket.on('updateCells', (updates) => {
-        console.log(updates);
         for(let i = 0; i < updates.length; i++) {
             let update = updates[i];
             board.cells[update.index] = update.cell;
             let targetCell = board.cells[update.index];
             let targetElement = document.getElementById(targetCell.id);
-            
-            if(targetCell.isHidden) {
-                if(targetCell.isFlagged) {
-                    targetElement.classList.add('flagged');
-                }
-                else {
-                    targetElement.classList.remove('flagged');
-                }
+            if(targetCell.isFlagged) {
+                targetElement.classList.add('flagged');
             }
             else {
+                targetElement.classList.remove('flagged');
+            }
+            if(!targetCell.isHidden) {
+                targetElement.classList.add('showing');
                 if(targetCell.isBomb) {
-                    targetElement.innerHTML = 'B';
                     targetElement.classList.add('bomb');
-                    targetElement.classList.add('showing');
+                    targetElement.innerHTML = 'B';
                 }
                 else {
+                    targetElement.classList.remove('bomb');
+                    targetElement.innerHTML = targetCell.count;
+                    targetElement.classList.add('c' + targetCell.count);
                     if(targetCell.count == 0) {
                         socket.emit('revealAdjacent', targetCell.id);
                     }
-                    if(targetElement.classList.contains('flagged')) {
-                        targetElement.classList.remove('flagged');
-                    }
-                    targetElement.innerHTML = targetCell.count;
-                    targetElement.classList.add('c' + targetCell.count);
                 }
-                targetElement.classList.add('showing');
             }
         }
         console.log(board);

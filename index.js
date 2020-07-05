@@ -67,6 +67,28 @@ function applyCounts(board) {
     return board;
 }
 
+function flagCell(socket, cell) {
+    let board = activeGames[socket.id];
+    let lookup = board.cellLookup[cell.id];
+    lookup.isFlagged = true;
+    cell.isFlagged = true;
+    socket.emit('updateCells', [{
+        index: cell.index,
+        cell: cell
+    }]);
+}
+
+function unflagCell(socket, cell) {
+    let board = activeGames[socket.id];
+    let lookup = board.cellLookup[cell.id];
+    lookup.isFlagged = false;
+    cell.isFlagged = false;
+    socket.emit('updateCells', [{
+        index: cell.index,
+        cell: cell
+    }]);
+}
+
 function getAdjacentCells(board, cell) {
     let width = board.width;
     let height = board.height;
@@ -123,6 +145,11 @@ function getIndex(width, height, x, y) {
     return x + (y * width);
 }
 
+function markTrigger(socket, cell) {
+    let id = cell.id;
+    socket.emit('markTrigger', id);
+}
+
 function revealAdjacentCells(socket, centerCell) {
     let updates = [];
     let board = activeGames[socket.id];
@@ -144,6 +171,7 @@ function revealCell(socket, cell) {
         board.revealed++;
         cell.count = lookup.count;
         cell.isBomb = lookup.isBomb;
+        cell.isFlagged = lookup.isFlagged;
         lookup.isHidden = false;
         cell.isHidden = false;
         if(board.state == 'virgin') {
@@ -152,11 +180,12 @@ function revealCell(socket, cell) {
             socket.emit('updateGameState', board.state);
             socket.emit('updateGameStart', board.start);
         }
-        if(cell.isBomb) {
+        if(cell.isBomb && (board.state == 'virgin' || board.state == 'playing')) {
             board.state = 'defeat';
             board.end = new Date();
             socket.emit('updateGameState', board.state);
             socket.emit('updateGameEnd', board.end);
+            markTrigger(socket, cell);
             showBoard(socket);
         }
         if(lookup.count == 0) {
@@ -170,6 +199,7 @@ function revealCell(socket, cell) {
             board.end = new Date();
             socket.emit('updateGameState', board.state);
             socket.emit('updateGameEnd', board.end);
+            showBoard(socket);
         }
         socket.emit('updateCells', [{
             index: index,
@@ -213,35 +243,24 @@ io.on('connection', (socket) => {
 
     socket.on('flag', (id) => {
         let board = activeGames[socket.id];
-        let lookup = board.cellLookup[id];
-        let index = lookup.index;
-        let cell = board.cells[index];
-        lookup.isFlagged = true;
-        cell.isFlagged = true;
-        socket.emit('updateCells', [{
-            index: index,
-            cell: cell
-        }]);
+        let cell = board.cellLookup[id];
+        if(!cell.isFlagged) {
+            flagCell(socket, cell);
+        }
     });
 
     socket.on('unflag', (id) => {
         let board = activeGames[socket.id];
-        let lookup = board.cellLookup[id];
-        let index = lookup.index;
-        let cell = board.cells[index];
-        lookup.isFlagged = false;
-        cell.isFlagged = false;
-        socket.emit('updateCells', [{
-            index: index,
-            cell: cell
-        }]);
+        let cell = board.cellLookup[id];
+        if(cell.isFlagged) {
+            unflagCell(socket, cell);
+        }
     });
 
     // When a user clicks on an empty square
     socket.on('reveal', (id) => {
         let board = activeGames[socket.id];
         let cell = board.cellLookup[id];
-        console.log(cell);
         revealCell(socket, cell);
     });
 

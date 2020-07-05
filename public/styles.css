@@ -88,8 +88,19 @@
     background-color:#000;
     color:#c00;
 }
+.defeat .cell.c0.flagged {
+    opacity:1;
+}
 .defeat .cell.flagged {
     border-color:#ff0;
+    color:#ff0;
+}
+.defeat .cell.flagged::after {
+    opacity:0;
+}
+.defeat .cell.trigger {
+    border-color:#fff;
+    color:#fff;
 }
 
 .victory {
@@ -103,6 +114,10 @@
 }
 .victory .cell.flagged {
     border-color:#ff0;
+    color:#ff0;
+}
+.victory .cell.flagged::after {
+    opacity:0;
 }
 * {
     box-sizing:border-box;
