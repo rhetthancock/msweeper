@@ -3,15 +3,87 @@
     flex-wrap:wrap;
 }
 .cell {
+    align-items:center;
     background-color:#666;
     border:3px solid #999;
     border-radius:50%;
+    color:transparent;
     cursor:pointer;
+    display:flex;
+    font-family:monospace;
+    font-size:2em;
+    justify-content:center;
+    position:relative;
+    text-align:center;
     transition:all 250ms;
+    user-select:none;
+}
+.cell::after {
+    content:"";
+    display:block;
+    position:absolute;
 }
 .cell:hover {
     background-color:#999;
     border-color:#ccc;
+}
+.cell.showing {
+    background-color:transparent;
+    border-color:#666;
+}
+.cell.c0 {
+    cursor:default;
+    opacity:0;
+}
+.cell.c1 {
+    color:#06f;
+}
+.cell.c2 {
+    color:#0f0;
+}
+.cell.c3 {
+    color:#f33;
+}
+.cell.c4 {
+    color:#63f;
+}
+.cell.c5 {
+    color:#f3f;
+}
+.cell.c6 {
+    color:#3ff;
+}
+.cell.c7 {
+    color:#f93;
+}
+.cell.c8 {
+    color:#fff;
+}
+.cell.flagged {
+    border-color:#ff0;
+}
+.cell.flagged::after {
+    border-left:10px solid transparent;
+    border-top:15px solid #ff0;
+    border-right:10px solid transparent;
+    left:calc(50% - 10px);
+    top:calc(50% - 7.5px);
+}
+.defeat {
+    background-color:#c00;
+}
+.defeat .cell {
+    background-color:transparent;
+    border-color:#000;
+    color:#000;
+}
+.defeat .cell.bomb {
+    background-color:#000;
+    color:#c00;
+}
+
+.victory {
+    background-color:#0c0;
 }
 * {
     box-sizing:border-box;

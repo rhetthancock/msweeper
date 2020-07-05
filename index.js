@@ -15,11 +15,13 @@ function Board(width, height, gameId) {
         height: height,
         cellLookup: {},
         cells: [],
+        revealed: 0
     };
     for(let y = 0; y < height; y++) {
         for(let x = 0; x < width; x++) {
             let uid = uuidv4();
             board.cellLookup[uid] = {
+                id: uid,
                 x: x,
                 y: y,
                 index: getIndex(width, height, x, y),
@@ -69,6 +71,7 @@ function getAdjacentCells(board, cell) {
     let iBottomRight = getIndex(board.width, board.height, x + 1, y + 1);
     let iBottom = getIndex(board.width, board.height, x, y + 1);
     let iBottomLeft = getIndex(board.width, board.height, x - 1, y + 1);
+    let iLeft = getIndex(board.width, board.height, x - 1, y);
     if(iTopLeft != -1) {
         let id = board.cells[iTopLeft].id;
         cells.push(board.cellLookup[id]);
@@ -97,6 +100,10 @@ function getAdjacentCells(board, cell) {
         let id = board.cells[iBottomLeft].id;
         cells.push(board.cellLookup[id]);
     }
+    if(iLeft != -1) {
+        let id = board.cells[iLeft].id;
+        cells.push(board.cellLookup[id]);
+    }
     return cells;
 }
 
@@ -107,15 +114,33 @@ function getIndex(width, height, x, y) {
     return x + (y * width);
 }
 
+function revealAdjacent(socket, cell) {
+    let updates = [];
+    let board = activeGames[socket.id];
+    let adjacentCells = getAdjacentCells(board, cell);
+    for(let i = 0; i < adjacentCells.length; i++) {
+        if(adjacentCells[i].isHidden) {
+            adjacentCells[i].isHidden = false;
+            updates.push({
+                index: adjacentCells[i].index,
+                cell: adjacentCells[i]
+            });
+            board.revealed++;
+        }
+    }
+    socket.emit('updateCells', updates);
+}
+
 function roll(chance) {
     return (Math.random() <= chance);
 }
 
-// Send simple GET response
+// SERVE SIMPLE HTML RESPONSE
 // app.get('/', (request, response) => {
 //     response.send('<h1>Hello World!</h1>');
 // });
 
+// SERVE SINGLE FILE
 // app.get('/', (request, response) => {
 //     response.sendFile(__dirname + '/index.html');
 // });
@@ -136,19 +161,66 @@ io.on('connection', (socket) => {
         console.log('user has disconnected');
     });
 
+    socket.on('flag', (id) => {
+        let board = activeGames[socket.id];
+        let lookup = board.cellLookup[id];
+        let index = lookup.index;
+        let target = board.cells[index];
+        target.isFlagged = true;
+        socket.emit('updateCells', [{
+            index: index,
+            cell: board.cells[index]
+        }]);
+    });
+
+    socket.on('unflag', (id) => {
+        let board = activeGames[socket.id];
+        let lookup = board.cellLookup[id];
+        let index = lookup.index;
+        let target = board.cells[index];
+        target.isFlagged = false;
+        socket.emit('updateCells', [{
+            index: index,
+            cell: board.cells[index]
+        }]);
+    });
+
     // When a user clicks on an empty square
     socket.on('reveal', (id) => {
         let board = activeGames[socket.id];
         let lookup = board.cellLookup[id];
         let index = lookup.index;
-        board.cells[index].count = lookup.count;
-        board.cells[index].isBomb = lookup.isBomb;
-        board.cells[index].isHidden = false;
-        console.log(board.cells);
+        let target = board.cells[index];
+        target.count = lookup.count;
+        target.isBomb = lookup.isBomb;
+        target.isHidden = false;
+        target.isFlagged = false;
+        if(board.state == 'virgin') {
+            board.state = 'playing';
+            board.start = new Date();
+            socket.emit('updateGameState', board.state);
+            socket.emit('updateGameStart', board.start);
+        }
+        if(lookup.isBomb) {
+            board.state = 'defeat';
+            socket.emit('updateGameState', board.state);
+        }
+        if(lookup.count == 0) {
+            revealAdjacent(socket, target);
+        }
         socket.emit('updateCells', [{
             index: index,
             cell: board.cells[index]
         }]);
+        board.revealed++;
+    });
+
+    socket.on('revealAdjacent', (id) => {
+        let board = activeGames[socket.id];
+        let lookup = board.cellLookup[id];
+        let index = lookup.index;
+        let target = board.cells[index];
+        revealAdjacent(socket, target);
     });
 });
 
