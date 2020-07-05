@@ -167,7 +167,7 @@ function revealCell(socket, cell) {
     if(cell && cell.isHidden) {
         let board = activeGames[socket.id];
         let lookup = board.cellLookup[cell.id];
-        let index = lookup.index;
+        let index = lookup.inde
         board.revealed++;
         cell.count = lookup.count;
         cell.isBomb = lookup.isBomb;
@@ -176,13 +176,13 @@ function revealCell(socket, cell) {
         cell.isHidden = false;
         if(board.state == 'virgin') {
             board.state = 'playing';
-            board.start = new Date();
+            board.start = Date.now();
             socket.emit('updateGameState', board.state);
             socket.emit('updateGameStart', board.start);
         }
         if(cell.isBomb && (board.state == 'virgin' || board.state == 'playing')) {
             board.state = 'defeat';
-            board.end = new Date();
+            board.end = Date.now();
             socket.emit('updateGameState', board.state);
             socket.emit('updateGameEnd', board.end);
             markTrigger(socket, cell);

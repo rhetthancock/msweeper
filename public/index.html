@@ -7,6 +7,22 @@
         <link rel="stylesheet" href="styles.css">
     </head>
     <body>
-        <div id="board"></div>
+        <div id="hud">
+            <div class="char-group" id="timer">
+                <span class="char">T</span>
+                <span class="char" id="timer-h">0</span>
+                <span class="char" id="timer-t">0</span>
+                <span class="char" id="timer-d">0</span>
+            </div>
+            <div class="char-group" id="bomb-count">
+                <span class="char flagged"></span>
+                <span class="char" id="bomb-count-h">0</span>
+                <span class="char" id="bomb-count-t">0</span>
+                <span class="char" id="bomb-count-d">0</span>
+            </div>
+        </div>
+        <div id="view">
+            <div id="board"></div>
+        </div>
     </body>
 </html>

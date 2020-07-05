@@ -2,6 +2,16 @@
     display:flex;
     flex-wrap:wrap;
 }
+#bomb-count .char {
+    border-color:#ff0;
+    color:#ff0;
+}
+#hud {
+    display:flex;
+    justify-content:space-between;
+    padding-left:60px;
+    user-select:none;
+}
 .cell {
     align-items:center;
     background-color:#666;
@@ -25,7 +35,7 @@
 }
 .cell:hover {
     background-color:#999;
-    border-color:#ccc;
+    border-color:#fff;
 }
 .cell.showing {
     background-color:transparent;
@@ -66,6 +76,7 @@
     border-color:#ff0;
 }
 .cell.glimmer {
+    background-color:#999;
     border-color:#fff;
 }
 .cell.flagged::after {
@@ -75,9 +86,35 @@
     left:calc(50% - 10px);
     top:calc(50% - 7.5px);
 }
+.char {
+    align-items:center;
+    border:3px solid #fff;
+    border-radius:50%;
+    color:#fff;
+    display:flex;
+    font-size:2em;
+    font-family:monospace;
+    height:50px;
+    justify-content:center;
+    margin:5px;
+    position:relative;
+    width:50px;
+}
+.char.flagged::after {
+    border-left:10px solid transparent;
+    border-top:15px solid #ff0;
+    border-right:10px solid transparent;
+    content:"";
+    display:block;
+    left:calc(50% - 10px);
+    top:calc(50% - 7.5px);
+}
+.char-group {
+    display:flex;
+}
 .count {
     align-items:center;
-    color:#fff;
+    color:#666;
     display:flex;
     font-family:monospace;
     font-size:2em;
@@ -111,7 +148,9 @@
     border-color:#fff;
     color:#fff;
 }
-
+.defeat .count {
+    color:#000;
+}
 .victory {
     background-color:#0c0;
 }
@@ -127,6 +166,9 @@
 }
 .victory .cell.flagged::after {
     opacity:0;
+}
+.victory .count {
+    color:#000;
 }
 * {
     box-sizing:border-box;

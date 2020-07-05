@@ -8,9 +8,15 @@ let leftMouseDown = false;
 let leftMouseTarget;
 let rightMouseDown = false;
 let rightMouseTarget;
+function generateMockBoard(width, height) {
+
+}
 function generateBoard(socket) {
     let container = document.getElementById('board');
-    container.style.width = (options.cellSize + (options.cellMargin * 2)) * (board.width + 1) + 'px';
+    let hud = document.getElementById('hud');
+    let width = (options.cellSize + (options.cellMargin * 2)) * (board.width + 1);
+    hud.style.maxWidth = width + 'px';
+    container.style.width = width + 'px';
     // COUNT HEADER ROW
     for(let i = 0; i < board.width + 1; i++) {
         let count = document.createElement('div');
@@ -26,7 +32,7 @@ function generateBoard(socket) {
     // BOARD
     let yCount = 0;
     for(let i = 0; i < board.cells.length; i++) {
-        // FIRST ELEMENT
+        // COUNT COLUMN START
         if(i % board.width == 0) {
             let count = document.createElement('div');
             count.classList.add('count');
@@ -76,7 +82,29 @@ function generateBoard(socket) {
 function handleKeydown(event) {
     if(event.key == ' ') {
         let id = hover.id;
-        console.log(id);
+    }
+}
+function updateTimer() {
+    let elapsed = Date.now() - board.start;
+    let secondsElapsed = Math.floor(elapsed / 1000);
+    let timerH = document.getElementById('timer-h');
+    let timerT = document.getElementById('timer-t');
+    let timerD = document.getElementById('timer-d');
+    if(secondsElapsed < 999) {
+        let secH = Math.floor(secondsElapsed / 100) % 100;
+        let secT = Math.floor(secondsElapsed / 10) % 10;
+        let secD = secondsElapsed % 10;
+        timerH.innerHTML = secH;
+        timerT.innerHTML = secT;
+        timerD.innerHTML = secD;
+    }
+    else {
+        timerH.innerHTML = 9;
+        timerT.innerHTML = 9;
+        timerD.innerHTML = 9;
+    }
+    if(board.state == 'playing' && secondsElapsed < 999) {
+        window.requestAnimationFrame(updateTimer);
     }
 }
 function init() {
@@ -147,10 +175,8 @@ function init() {
             container.innerHTML = '';
         }
         generateBoard(socket);
-        console.log(board);
     });
     socket.on('updateCells', (updates) => {
-        console.log(updates);
         for(let i = 0; i < updates.length; i++) {
             let update = updates[i];
             board.cells[update.index] = update.cell;
@@ -166,7 +192,7 @@ function init() {
                 targetElement.classList.add('showing');
                 if(targetCell.isBomb) {
                     targetElement.classList.add('bomb');
-                    targetElement.innerHTML = 'B';
+                    targetElement.innerHTML = 'M';
                 }
                 else {
                     targetElement.classList.remove('bomb');
@@ -178,15 +204,16 @@ function init() {
                 }
             }
         }
-        console.log(board);
     });
-    socket.on('updateGameEnd'), (time) => {
+    socket.on('updateGameEnd', (time) => {
         board.end = time;
-        console.log(board);
-    }
+    });
     socket.on('updateGameState', (newState) => {
         board.state = newState;
-        if(newState == 'defeat') {
+        if(newState == 'playing') {
+            window.requestAnimationFrame(updateTimer);
+        }
+        else if(newState == 'defeat') {
             document.body.classList.add('defeat');
         }
         else if(newState == 'victory') {
@@ -195,7 +222,6 @@ function init() {
     });
     socket.on('updateGameStart', (time) => {
         board.start = time;
-        console.log(board);
     });
 }
 window.addEventListener('load', init);
