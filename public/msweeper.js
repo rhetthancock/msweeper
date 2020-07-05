@@ -126,6 +126,7 @@ function init() {
         console.log(board);
     });
     socket.on('updateCells', (updates) => {
+        console.log(updates);
         for(let i = 0; i < updates.length; i++) {
             let update = updates[i];
             board.cells[update.index] = update.cell;

@@ -164,7 +164,7 @@ function revealAdjacentCells(socket, centerCell) {
 }
 
 function revealCell(socket, cell) {
-    if(cell.isHidden) {
+    if(cell && cell.isHidden) {
         let board = activeGames[socket.id];
         let lookup = board.cellLookup[cell.id];
         let index = lookup.index;
@@ -243,7 +243,9 @@ io.on('connection', (socket) => {
 
     socket.on('flag', (id) => {
         let board = activeGames[socket.id];
-        let cell = board.cellLookup[id];
+        let lookup = board.cellLookup[id];
+        let index = lookup.index;
+        let cell = board.cells[index];
         if(!cell.isFlagged) {
             flagCell(socket, cell);
         }
@@ -251,7 +253,9 @@ io.on('connection', (socket) => {
 
     socket.on('unflag', (id) => {
         let board = activeGames[socket.id];
-        let cell = board.cellLookup[id];
+        let lookup = board.cellLookup[id];
+        let index = lookup.index;
+        let cell = board.cells[index];
         if(cell.isFlagged) {
             unflagCell(socket, cell);
         }
