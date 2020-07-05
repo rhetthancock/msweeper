@@ -10,8 +10,32 @@ let rightMouseDown = false;
 let rightMouseTarget;
 function generateBoard(socket) {
     let container = document.getElementById('board');
-    container.style.width = (options.cellSize + (options.cellMargin * 2)) * board.width + 'px';
+    container.style.width = (options.cellSize + (options.cellMargin * 2)) * (board.width + 1) + 'px';
+    // COUNT HEADER ROW
+    for(let i = 0; i < board.width + 1; i++) {
+        let count = document.createElement('div');
+        count.classList.add('count');
+        if(i != 0) {
+            count.innerHTML = i - 1;
+        }
+        count.style.width = options.cellSize + 'px';
+        count.style.height = options.cellSize + 'px';
+        count.style.margin = options.cellMargin + 'px';
+        container.appendChild(count);
+    }
+    // BOARD
+    let yCount = 0;
     for(let i = 0; i < board.cells.length; i++) {
+        // FIRST ELEMENT
+        if(i % board.width == 0) {
+            let count = document.createElement('div');
+            count.classList.add('count');
+            count.innerHTML = yCount++;
+            count.style.width = options.cellSize + 'px';
+            count.style.height = options.cellSize + 'px';
+            count.style.margin = options.cellMargin + 'px';
+            container.appendChild(count);
+        }
         let cell = document.createElement('div');
         cell.classList.add('cell');
         cell.id = board.cells[i].id;

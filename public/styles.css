@@ -75,6 +75,15 @@
     left:calc(50% - 10px);
     top:calc(50% - 7.5px);
 }
+.count {
+    align-items:center;
+    color:#fff;
+    display:flex;
+    font-family:monospace;
+    font-size:2em;
+    justify-content:center;
+    user-select:none;
+}
 .defeat {
     background-color:#c00;
 }
