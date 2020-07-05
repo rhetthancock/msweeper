@@ -111,8 +111,10 @@ function init() {
         }, 200, this);
     });
     socket.on('newBoard', (payload) => {
-        board = payload;
         let container = document.getElementById('board');
+        board = payload;
+        document.body.classList.remove('defeat');
+        document.body.classList.remove('victory');
         if(container.children.length > 0) {
             container.innerHTML = '';
         }
@@ -156,6 +158,10 @@ function init() {
         }
         console.log(board);
     });
+    socket.on('updateGameEnd'), (time) => {
+        board.end = time;
+        console.log(board);
+    }
     socket.on('updateGameState', (newState) => {
         board.state = newState;
         if(newState == 'defeat') {

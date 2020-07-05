@@ -88,16 +88,26 @@
     background-color:#000;
     color:#c00;
 }
-.defeat .cell.flagged::after {
-    opacity:0;
+.defeat .cell.flagged {
+    border-color:#ff0;
 }
 
 .victory {
     background-color:#0c0;
+}
+.victory .cell {
+    background-color:transparent;
+    border-color:#000;
+    color:#000;
+    cursor:default;
+}
+.victory .cell.flagged {
+    border-color:#ff0;
 }
 * {
     box-sizing:border-box;
 }
 body {
     background:#000;
+    transition:all 500ms;
 }

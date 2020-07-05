@@ -68,17 +68,19 @@ function applyCounts(board) {
 }
 
 function getAdjacentCells(board, cell) {
+    let width = board.width;
+    let height = board.height;
     let cells = [];
     let x = cell.x;
     let y = cell.y;
-    let iTopLeft = getIndex(board.width, board.height, x - 1, y - 1);
-    let iTop = getIndex(board.width, board.height, x, y - 1);
-    let iTopRight = getIndex(board.width, board.height, x + 1, y - 1);
-    let iRight = getIndex(board.width, board.height, x + 1, y);
-    let iBottomRight = getIndex(board.width, board.height, x + 1, y + 1);
-    let iBottom = getIndex(board.width, board.height, x, y + 1);
-    let iBottomLeft = getIndex(board.width, board.height, x - 1, y + 1);
-    let iLeft = getIndex(board.width, board.height, x - 1, y);
+    let iTopLeft = getIndex(width, height, x - 1, y - 1);
+    let iTop = getIndex(width, height, x, y - 1);
+    let iTopRight = getIndex(width, height, x + 1, y - 1);
+    let iRight = getIndex(width, height, x + 1, y);
+    let iBottomRight = getIndex(width, height, x + 1, y + 1);
+    let iBottom = getIndex(width, height, x, y + 1);
+    let iBottomLeft = getIndex(width, height, x - 1, y + 1);
+    let iLeft = getIndex(width, height, x - 1, y);
     if(iTopLeft != -1) {
         let id = board.cells[iTopLeft].id;
         cells.push(board.cellLookup[id]);
@@ -121,24 +123,59 @@ function getIndex(width, height, x, y) {
     return x + (y * width);
 }
 
-function revealAdjacentCells(socket, cell) {
+function revealAdjacentCells(socket, centerCell) {
     let updates = [];
     let board = activeGames[socket.id];
-    let adjacentCells = getAdjacentCells(board, cell);
+    let adjacentCells = getAdjacentCells(board, centerCell);
     for(let i = 0; i < adjacentCells.length; i++) {
-        if(adjacentCells[i].isHidden && !adjacentCells[i].isFlagged) {
-            adjacentCells[i].isHidden = false;
-            if(adjacentCells[i].count == 0) {
-                revealAdjacentCells(socket, adjacentCells[i]);
-            }
-            updates.push({
-                index: adjacentCells[i].index,
-                cell: adjacentCells[i]
-            });
-            board.revealed++;
+        let cell = adjacentCells[i];
+        if(cell.isHidden && !cell.isFlagged) {
+            revealCell(socket, cell);
         }
     }
     socket.emit('updateCells', updates);
+}
+
+function revealCell(socket, cell) {
+    if(cell.isHidden) {
+        let board = activeGames[socket.id];
+        let lookup = board.cellLookup[cell.id];
+        let index = lookup.index;
+        board.revealed++;
+        cell.count = lookup.count;
+        cell.isBomb = lookup.isBomb;
+        lookup.isHidden = false;
+        cell.isHidden = false;
+        if(board.state == 'virgin') {
+            board.state = 'playing';
+            board.start = new Date();
+            socket.emit('updateGameState', board.state);
+            socket.emit('updateGameStart', board.start);
+        }
+        if(cell.isBomb) {
+            board.state = 'defeat';
+            board.end = new Date();
+            socket.emit('updateGameState', board.state);
+            socket.emit('updateGameEnd', board.end);
+            showBoard(socket);
+        }
+        if(lookup.count == 0) {
+            revealAdjacentCells(socket, cell);
+        }
+        if(
+            board.revealed == (board.cells.length - board.bombCount) &&
+            board.state == 'playing'
+        ) {
+            board.state = 'victory';
+            board.end = new Date();
+            socket.emit('updateGameState', board.state);
+            socket.emit('updateGameEnd', board.end);
+        }
+        socket.emit('updateCells', [{
+            index: index,
+            cell: cell
+        }]);
+    }
 }
 
 function roll(chance) {
@@ -150,17 +187,8 @@ function showBoard(socket) {
     let board = activeGames[socket.id];
     for(let i = 0; i < board.cells.length; i++) {
         let cell = board.cells[i];
-        let id = cell.id;
-        let lookup = board.cellLookup[id];
         if(cell.isHidden) {
-            lookup.isHidden = false;
-            cell.isHidden = false;
-            cell.count = lookup.count;
-            cell.isBomb = lookup.isBomb;
-            updates.push({
-                index: board.cells[i].index,
-                cell: board.cells[i]
-            });
+            revealCell(socket, cell);
         }
     }
     socket.emit('updateCells', updates);
@@ -212,34 +240,9 @@ io.on('connection', (socket) => {
     // When a user clicks on an empty square
     socket.on('reveal', (id) => {
         let board = activeGames[socket.id];
-        let lookup = board.cellLookup[id];
-        let index = lookup.index;
-        let cell = board.cells[index];
-        cell.count = lookup.count;
-        cell.isBomb = lookup.isBomb;
-        lookup.isHidden = false;
-        cell.isHidden = false;
-        lookup.isFlagged = false;
-        cell.isFlagged = false;
-        if(board.state == 'virgin') {
-            board.state = 'playing';
-            board.start = new Date();
-            socket.emit('updateGameState', board.state);
-            socket.emit('updateGameStart', board.start);
-        }
-        if(lookup.isBomb) {
-            board.state = 'defeat';
-            socket.emit('updateGameState', board.state);
-            showBoard(socket);
-        }
-        if(lookup.count == 0) {
-            revealAdjacentCells(socket, cell);
-        }
-        socket.emit('updateCells', [{
-            index: index,
-            cell: board.cells[index]
-        }]);
-        board.revealed++;
+        let cell = board.cellLookup[id];
+        console.log(cell);
+        revealCell(socket, cell);
     });
 
     socket.on('revealAdjacent', (id) => {
