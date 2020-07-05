@@ -59,8 +59,14 @@
 .cell.c8 {
     color:#fff;
 }
+.cell.deny {
+    border-color:#c00;
+}
 .cell.flagged {
     border-color:#ff0;
+}
+.cell.glimmer {
+    border-color:#fff;
 }
 .cell.flagged::after {
     border-left:10px solid transparent;
@@ -76,10 +82,14 @@
     background-color:transparent;
     border-color:#000;
     color:#000;
+    cursor:default;
 }
 .defeat .cell.bomb {
     background-color:#000;
     color:#c00;
+}
+.defeat .cell.flagged::after {
+    opacity:0;
 }
 
 .victory {

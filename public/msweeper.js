@@ -4,6 +4,10 @@ let options = {
     cellMargin: 5
 }
 let hover;
+let leftMouseDown = false;
+let leftMouseTarget;
+let rightMouseDown = false;
+let rightMouseTarget;
 function generateBoard(socket) {
     let container = document.getElementById('board');
     container.style.width = (options.cellSize + (options.cellMargin * 2)) * board.width + 'px';
@@ -26,7 +30,10 @@ function generateBoard(socket) {
         });
         cell.addEventListener('contextmenu', (event) => {
             event.preventDefault();
-            if((board.state == 'playing' || board.state == 'virgin') && !event.target.classList.contains('showing')) {
+            if(
+                (board.state == 'playing' || board.state == 'virgin') &&
+                !event.target.classList.contains('showing')
+            ) {
                 let id = event.target.id;
                 if(event.target.classList.contains('flagged')) {
                     socket.emit('unflag', id);
@@ -35,10 +42,9 @@ function generateBoard(socket) {
                     socket.emit('flag', id);
                 }
             }
-        })
+        });
         cell.addEventListener('mouseover', (event) => {
             hover = event.target;
-            console.log(hover);
         });
         container.appendChild(cell);
     }
@@ -51,8 +57,15 @@ function handleKeydown(event) {
 }
 function init() {
     const socket = io();
+    window.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+    })
     window.addEventListener('keydown', (event) => {
-        if(event.key == ' ' && (board.state == 'playing' || board.state == 'virgin')) {
+        if(
+            event.key == ' ' &&
+            (board.state == 'playing' || board.state == 'virgin') &&
+            !hover.classList.contains('showing')
+        ) {    
             if(hover.classList.contains('flagged')) {
                 socket.emit('unflag', hover.id);
             }
@@ -61,9 +74,45 @@ function init() {
             }
         }
     });
+    window.addEventListener('mousedown', (event) => {
+        if(event.button == 0) {
+            leftMouseDown = true;
+            leftMouseTarget = event.target;
+        }
+        else if(event.button == 2) {
+            rightMouseDown = true;
+            rightMouseTarget = event.target;
+        }
+    });
+    window.addEventListener('mouseup', (event) => {
+        if(leftMouseDown && rightMouseDown && leftMouseTarget == rightMouseTarget) {
+            let id = event.target.id;
+            socket.emit('revealAdjacent', id);
+        }
+        if(event.button == 0) {
+            leftMouseDown = false;
+        }
+        else if(event.button == 2) {
+            rightMouseDown = false;
+        }
+    })
+    socket.on('deny', (id) => {
+        let targetElement = document.getElementById(id);
+        targetElement.classList.add('deny');
+        setTimeout(function(that) {
+            document.getElementById(id).classList.remove('deny');
+        }, 200, this);
+    });
+    socket.on('glimmer', (id) => {
+        let targetElement = document.getElementById(id);
+        targetElement.classList.add('glimmer');
+        setTimeout(function(that) {
+            document.getElementById(id).classList.remove('glimmer');
+        }, 200, this);
+    });
     socket.on('newBoard', (payload) => {
         board = payload;
-        let container = document.getElementById('board')
+        let container = document.getElementById('board');
         if(container.children.length > 0) {
             container.innerHTML = '';
         }
