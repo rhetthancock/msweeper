@@ -15,7 +15,8 @@ function Board(width, height, gameId) {
         height: height,
         cellLookup: {},
         cells: [],
-        revealed: 0
+        revealed: 0,
+        flagged: 0
     };
     for(let y = 0; y < height; y++) {
         for(let x = 0; x < width; x++) {
@@ -70,23 +71,27 @@ function applyCounts(board) {
 function flagCell(socket, cell) {
     let board = activeGames[socket.id];
     let lookup = board.cellLookup[cell.id];
+    board.flagged++;
     lookup.isFlagged = true;
     cell.isFlagged = true;
     socket.emit('updateCells', [{
         index: cell.index,
         cell: cell
     }]);
+    socket.emit('updateFlagCount', board.flagged);
 }
 
 function unflagCell(socket, cell) {
     let board = activeGames[socket.id];
     let lookup = board.cellLookup[cell.id];
+    board.flagged--;
     lookup.isFlagged = false;
     cell.isFlagged = false;
     socket.emit('updateCells', [{
         index: cell.index,
         cell: cell
     }]);
+    socket.emit('updateFlagCount', board.flagged);
 }
 
 function getAdjacentCells(board, cell) {
@@ -179,6 +184,7 @@ function revealCell(socket, cell) {
             board.start = Date.now();
             socket.emit('updateGameState', board.state);
             socket.emit('updateGameStart', board.start);
+            socket.emit('updateFlagCount', board.count);
         }
         if(cell.isBomb && (board.state == 'virgin' || board.state == 'playing')) {
             board.state = 'defeat';
@@ -235,6 +241,8 @@ io.on('connection', (socket) => {
     delete clientBoard.cellLookup;
     socket.emit('newBoard', clientBoard);
     activeGames[socket.id] = applyCounts(activeGames[socket.id]);
+    socket.emit('updateBombCount', activeGames[socket.id].bombCount);
+    socket.emit('updateFlagCount', 0);
 
     // When a user disconnects
     socket.on('disconnect', () => {

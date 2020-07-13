@@ -28,7 +28,8 @@
     transition:all 250ms;
     user-select:none;
 }
-.cell::after {
+.cell::after,
+.cell::before {
     content:"";
     display:block;
     position:absolute;
@@ -85,6 +86,16 @@
     border-right:10px solid transparent;
     left:calc(50% - 10px);
     top:calc(50% - 7.5px);
+}
+.cell.touch {
+    border-color:#ff0;
+}
+.cell.touch::before {
+    background-color:#ff0;
+    height:100%;
+    left:0;
+    top:0;
+    width:100%;
 }
 .char {
     align-items:center;

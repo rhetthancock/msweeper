@@ -176,6 +176,9 @@ function init() {
         }
         generateBoard(socket);
     });
+    socket.on('updateBombCount', (count) => {
+        board.bombCount = count;
+    });
     socket.on('updateCells', (updates) => {
         for(let i = 0; i < updates.length; i++) {
             let update = updates[i];
@@ -205,6 +208,30 @@ function init() {
             }
         }
     });
+    socket.on('updateFlagCount', (count) => {
+        let bombCountH = document.getElementById('bomb-count-h');
+        let bombCountT = document.getElementById('bomb-count-t');
+        let bombCountD = document.getElementById('bomb-count-d');
+        if(board.state == 'virgin') {
+            bombCountH.innerHTML = 0;
+            bombCountT.innerHTML = 0;
+            bombCountD.innerHTML = 0;
+        }
+        else {
+            let bombCount = board.bombCount - count;
+            if(bombCount < 0) {
+                let dif = Math.abs(bombCount);
+                bombCountH.innerHTML = '-';
+                bombCountT.innerHTML = Math.floor(dif / 10) % 10;
+                bombCountD.innerHTML = dif % 10;
+            }
+            else {
+                bombCountH.innerHTML = Math.floor(bombCount / 100) % 100;
+                bombCountT.innerHTML = Math.floor(bombCount / 10) % 10;
+                bombCountD.innerHTML = bombCount % 10;
+            }
+        }
+    })
     socket.on('updateGameEnd', (time) => {
         board.end = time;
     });
